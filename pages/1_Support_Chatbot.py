@@ -1,136 +1,137 @@
 import streamlit as st
-from openai import OpenAI
 
 st.set_page_config(
     page_title="MiniStore Support",
     page_icon="💬"
 )
 
-# --------------------------------------------
-# OPENAI CLIENT
-# --------------------------------------------
-client = OpenAI(
-    api_key=st.secrets["OPENAI_API_KEY"]
-)
+# Product catalog
+PRODUCTS = {
+    "wireless headphones": {
+        "price": "$79.99",
+        "description": "Noise-cancelling Bluetooth headphones with 30-hour battery life."
+    },
+    "smart watch": {
+        "price": "$129.99",
+        "description": "Fitness tracking, heart-rate monitoring, and notifications."
+    },
+    "laptop backpack": {
+        "price": "$49.99",
+        "description": "Water-resistant backpack with laptop compartment."
+    },
+    "coffee maker": {
+        "price": "$89.99",
+        "description": "Programmable coffee maker with thermal carafe."
+    },
+    "gaming mouse": {
+        "price": "$39.99",
+        "description": "RGB gaming mouse with adjustable DPI."
+    },
+    "yoga mat": {
+        "price": "$24.99",
+        "description": "Non-slip yoga mat for workouts and meditation."
+    }
+}
 
-# --------------------------------------------
-# STORE CATALOG
-# --------------------------------------------
-catalog = """
-Products:
 
-1. Wireless Headphones
-Price: $79.99
-Noise-cancelling Bluetooth headphones.
+def get_response(user_input):
+    text = user_input.lower()
 
-2. Smart Watch
-Price: $129.99
-Fitness tracking and notifications.
+    # Product lookup
+    for product, info in PRODUCTS.items():
+        if product in text:
+            return (
+                f"📦 **{product.title()}**\n\n"
+                f"💰 Price: {info['price']}\n\n"
+                f"📝 {info['description']}"
+            )
 
-3. Laptop Backpack
-Price: $49.99
-Water-resistant backpack.
+    # Delivery
+    if any(word in text for word in ["delivery", "shipping", "ship"]):
+        return (
+            "🚚 Standard delivery takes 3–7 business days.\n\n"
+            "⚡ Express delivery takes 1–3 business days."
+        )
 
-4. Coffee Maker
-Price: $89.99
-Programmable coffee maker.
+    # Refunds
+    if "refund" in text:
+        return (
+            "💰 Refunds are processed within 5–7 business days "
+            "after we receive and inspect the returned item."
+        )
 
-5. Gaming Mouse
-Price: $39.99
-RGB gaming mouse.
+    # Returns
+    if "return" in text:
+        return (
+            "↩️ Products may be returned within 30 days "
+            "if they are unused and in original packaging."
+        )
 
-6. Yoga Mat
-Price: $24.99
-Non-slip fitness mat.
-"""
+    # Payment methods
+    if any(word in text for word in ["payment", "pay", "card", "upi"]):
+        return (
+            "💳 Accepted payment methods:\n\n"
+            "- Credit Card\n"
+            "- Debit Card\n"
+            "- UPI\n"
+            "- Net Banking\n"
+            "- PayPal"
+        )
 
-# --------------------------------------------
-# SYSTEM PROMPT
-# --------------------------------------------
-SYSTEM_PROMPT = f"""
-You are MiniStore's professional customer support assistant.
+    # Order status
+    if any(word in text for word in ["order", "track", "status"]):
+        return (
+            "📦 Your order is currently being processed.\n\n"
+            "Tracking information will appear after shipment."
+        )
 
-You only answer questions related to:
-- products
-- orders
-- delivery
-- shipping
-- refunds
-- returns
-- payments
-- store policies
+    # Greetings
+    if any(word in text for word in ["hello", "hi", "hey"]):
+        return (
+            "👋 Welcome to MiniStore Support!\n\n"
+            "How can I help you today?"
+        )
 
-Store Catalog:
-{catalog}
+    return (
+        "I can help with:\n\n"
+        "• Products\n"
+        "• Delivery & Shipping\n"
+        "• Refunds\n"
+        "• Returns\n"
+        "• Payment Methods\n"
+        "• Order Status"
+    )
 
-Rules:
-1. Only discuss MiniStore support topics.
-2. If a user asks unrelated questions,
-   politely redirect them to store support.
-3. Be professional and concise.
-4. Help customers understand products,
-   orders, refunds, delivery, and payment options.
-"""
 
-# --------------------------------------------
-# CHAT HISTORY
-# --------------------------------------------
+# Chat history
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-st.title("💬 MiniStore Support Chatbot")
+st.title("💬 MiniStore Support")
 
-st.write(
-    "Ask questions about products, delivery, refunds, payments, and orders."
-)
+st.write("Ask me about products, delivery, refunds, returns, payments, or orders.")
 
-# --------------------------------------------
-# DISPLAY CHAT HISTORY
-# --------------------------------------------
-for msg in st.session_state.messages:
-    with st.chat_message(msg["role"]):
-        st.markdown(msg["content"])
+# Show previous chat
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# --------------------------------------------
-# USER INPUT
-# --------------------------------------------
-prompt = st.chat_input("Ask MiniStore Support...")
+# User input
+prompt = st.chat_input("Ask a question...")
 
 if prompt:
-
     st.session_state.messages.append(
-        {
-            "role": "user",
-            "content": prompt
-        }
+        {"role": "user", "content": prompt}
     )
 
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    messages = [
-        {
-            "role": "system",
-            "content": SYSTEM_PROMPT
-        }
-    ]
-
-    messages.extend(st.session_state.messages)
-
-    response = client.chat.completions.create(
-        model="gpt-4.1-mini",
-        messages=messages,
-        temperature=0.3
-    )
-
-    answer = response.choices[0].message.content
+    response = get_response(prompt)
 
     st.session_state.messages.append(
-        {
-            "role": "assistant",
-            "content": answer
-        }
+        {"role": "assistant", "content": response}
     )
 
     with st.chat_message("assistant"):
-        st.markdown(answer)
+        st.markdown(response)
