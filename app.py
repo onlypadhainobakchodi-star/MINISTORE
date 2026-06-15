@@ -1,161 +1,186 @@
 import streamlit as st
 
+# ---------------------------------------------------
+# PAGE CONFIG
+# ---------------------------------------------------
 st.set_page_config(
-    page_title="MiniStore Support",
-    page_icon="💬"
+    page_title="MiniStore",
+    page_icon="🛍️",
+    layout="wide"
 )
 
-# -----------------------------------------
-# STORE PRODUCT DATA
-# -----------------------------------------
-products = {
-    "wireless headphones": {
-        "price": "$79.99",
+# ---------------------------------------------------
+# PRODUCT DATA
+# ---------------------------------------------------
+products = [
+    {
+        "name": "Wireless Headphones",
+        "price": 79.99,
+        "category": "Electronics",
         "description": "Noise-cancelling Bluetooth headphones with 30-hour battery life."
     },
-    "smart watch": {
-        "price": "$129.99",
+    {
+        "name": "Smart Watch",
+        "price": 129.99,
+        "category": "Electronics",
         "description": "Fitness tracking, heart-rate monitoring, and notifications."
     },
-    "laptop backpack": {
-        "price": "$49.99",
+    {
+        "name": "Laptop Backpack",
+        "price": 49.99,
+        "category": "Accessories",
         "description": "Water-resistant backpack with laptop compartment."
     },
-    "coffee maker": {
-        "price": "$89.99",
+    {
+        "name": "Coffee Maker",
+        "price": 89.99,
+        "category": "Home",
         "description": "Programmable coffee maker with thermal carafe."
     },
-    "gaming mouse": {
-        "price": "$39.99",
+    {
+        "name": "Gaming Mouse",
+        "price": 39.99,
+        "category": "Electronics",
         "description": "RGB gaming mouse with adjustable DPI."
     },
-    "yoga mat": {
-        "price": "$24.99",
+    {
+        "name": "Yoga Mat",
+        "price": 24.99,
+        "category": "Fitness",
         "description": "Non-slip yoga mat for workouts and meditation."
     }
+]
+
+# ---------------------------------------------------
+# SESSION STATE
+# ---------------------------------------------------
+if "cart_items" not in st.session_state:
+    st.session_state.cart_items = 0
+
+# ---------------------------------------------------
+# CUSTOM CSS
+# ---------------------------------------------------
+st.markdown("""
+<style>
+.main {
+    background-color: #f5f7fa;
 }
 
-# -----------------------------------------
-# RULE-BASED BOT
-# -----------------------------------------
-def chatbot_response(user_message):
+.hero {
+    padding: 30px;
+    border-radius: 15px;
+    background: linear-gradient(135deg,#0f172a,#2563eb);
+    color:white;
+    text-align:center;
+    margin-bottom:30px;
+}
 
-    message = user_message.lower()
+.product-card {
+    background:white;
+    padding:20px;
+    border-radius:12px;
+    box-shadow:0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom:20px;
+    min-height:280px;
+}
 
-    # Product questions
-    for product, info in products.items():
-        if product in message:
-            return (
-                f"📦 {product.title()}\n\n"
-                f"Price: {info['price']}\n\n"
-                f"{info['description']}"
-            )
+.price {
+    color:#2563eb;
+    font-size:24px;
+    font-weight:bold;
+}
 
-    # Delivery
-    if any(word in message for word in ["delivery", "shipping", "ship"]):
-        return (
-            "🚚 Standard delivery takes 3–7 business days.\n\n"
-            "Express delivery takes 1–3 business days."
-        )
+.floating-btn {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2563eb;
+    color: white;
+    padding: 14px 20px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: bold;
+    z-index: 9999;
+}
+</style>
+""", unsafe_allow_html=True)
 
-    # Refunds
-    if "refund" in message:
-        return (
-            "💰 Refunds are processed within 5–7 business days "
-            "after the returned item is inspected."
-        )
+# ---------------------------------------------------
+# SIDEBAR
+# ---------------------------------------------------
+st.sidebar.title("🛍️ Categories")
 
-    # Returns
-    if "return" in message:
-        return (
-            "↩️ Products can be returned within 30 days "
-            "of delivery if unused and in original packaging."
-        )
-
-    # Payment
-    if any(word in message for word in [
-        "payment",
-        "pay",
-        "card",
-        "upi",
-        "credit"
-    ]):
-        return (
-            "💳 We accept:\n"
-            "- Credit Cards\n"
-            "- Debit Cards\n"
-            "- UPI\n"
-            "- Net Banking\n"
-            "- PayPal"
-        )
-
-    # Order Status
-    if any(word in message for word in [
-        "order",
-        "status",
-        "track"
-    ]):
-        return (
-            "📦 Your order is currently being processed.\n\n"
-            "Tracking details will be available once shipped."
-        )
-
-    # Greetings
-    if any(word in message for word in [
-        "hello",
-        "hi",
-        "hey"
-    ]):
-        return (
-            "Hello! 👋 Welcome to MiniStore Support.\n\n"
-            "How can I help you today?"
-        )
-
-    return (
-        "I'm MiniStore's support assistant.\n\n"
-        "I can help with:\n"
-        "• Products\n"
-        "• Delivery\n"
-        "• Refunds\n"
-        "• Returns\n"
-        "• Payments\n"
-        "• Order Status"
-    )
-
-# -----------------------------------------
-# SESSION STATE
-# -----------------------------------------
-if "messages" not in st.session_state:
-    st.session_state.messages = []
-
-st.title("💬 MiniStore Support Chatbot")
-
-st.write(
-    "Ask about products, delivery, refunds, returns, payments, or orders."
+categories = ["All"] + sorted(
+    list(set([p["category"] for p in products]))
 )
 
-# Display previous messages
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+selected_category = st.sidebar.selectbox(
+    "Choose Category",
+    categories
+)
 
-# Chat Input
-prompt = st.chat_input("Type your question...")
+st.sidebar.markdown("---")
+st.sidebar.subheader("🛒 Cart Summary")
+st.sidebar.write(f"Items: {st.session_state.cart_items}")
+st.sidebar.write("Total: Demo Store")
 
-if prompt:
+# ---------------------------------------------------
+# HOMEPAGE
+# ---------------------------------------------------
+st.markdown("""
+<div class="hero">
+<h1>MiniStore</h1>
+<h3>Your Modern Online Shopping Experience</h3>
+<p>Find the best products at unbeatable prices.</p>
+</div>
+""", unsafe_allow_html=True)
 
-    st.session_state.messages.append(
-        {"role": "user", "content": prompt}
-    )
+st.header("⭐ Featured Products")
 
-    with st.chat_message("user"):
-        st.markdown(prompt)
+filtered_products = products
 
-    response = chatbot_response(prompt)
+if selected_category != "All":
+    filtered_products = [
+        p for p in products
+        if p["category"] == selected_category
+    ]
 
-    st.session_state.messages.append(
-        {"role": "assistant", "content": response}
-    )
+# ---------------------------------------------------
+# PRODUCT GRID
+# ---------------------------------------------------
+cols = st.columns(3)
 
-    with st.chat_message("assistant"):
-        st.markdown(response)
+for index, product in enumerate(filtered_products):
+    with cols[index % 3]:
+        st.markdown(
+            f"""
+            <div class="product-card">
+                <h3>{product['name']}</h3>
+                <p><b>Category:</b> {product['category']}</p>
+                <p>{product['description']}</p>
+                <p class="price">${product['price']}</p>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        if st.button(
+            f"Add to Cart - {product['name']}",
+            key=product["name"]
+        ):
+            st.session_state.cart_items += 1
+            st.success(f"{product['name']} added!")
+
+# ---------------------------------------------------
+# FLOATING SUPPORT BUTTON
+# ---------------------------------------------------
+st.markdown(
+    """
+    <a class="floating-btn"
+       href="/Support_Chatbot"
+       target="_self">
+       💬 Support
+    </a>
+    """,
+    unsafe_allow_html=True
+)
